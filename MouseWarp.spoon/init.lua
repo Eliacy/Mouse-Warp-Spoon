@@ -7,6 +7,9 @@
 --- cursor position are on different physical screens moves the cursor to the center of that window. If they are
 --- on the same screen, the cursor is left untouched.
 ---
+--- Because subscribing to `hs.window.filter` performs a one-time full scan of all apps/windows (which can jank
+--- for a moment), that initialization is deferred until `MouseWarp.initDelay` seconds after the first enable.
+---
 --- See the project README for installation and usage.
 
 local obj = {}
@@ -15,7 +18,7 @@ obj.__index = obj
 -- Metadata ----------------------------------------------------------------
 
 obj.name = "MouseWarp"
-obj.version = "1.0.0"
+obj.version = "1.2.0"
 obj.author = "Elias Soong"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
@@ -24,12 +27,17 @@ obj.logger = hs.logger.new("MouseWarp")
 -- Whether automatic warping is currently active.
 obj.enabled = false
 
+-- Delay (in seconds) applied before the one-time window scan runs after the first enable,
+-- moving the momentary jank out of the startup moment. Adjust before calling `start()`.
+obj.initDelay = 1.0
+
 -- Internal state ------------------------------------------------------------
 
--- Created lazily on the first `start()` and kept subscribed for the whole session.
--- Subscribing triggers a full scan of all apps/windows (via hs.window.filter's global watcher),
--- so keeping it subscribed makes enable/disable an instant flag flip instead of a re-scan.
+-- The window filter is created lazily and then kept subscribed for the whole session, so that
+-- enable/disable stays an instant flag flip. Subscribing triggers a one-time full scan of all
+-- apps/windows, hence the deferred initialization above.
 obj.windowFilter = nil
+obj.initTimer = nil
 obj.hotkey = nil
 
 local MODIFIER_MAP = {
@@ -51,14 +59,14 @@ function obj:sameScreen(win)
     return w.x == m.x and w.y == m.y and w.w == m.w and w.h == m.h
 end
 
+local WARP_SETTLE_DELAY = 0.08 -- focus events can arrive mid-transition; re-check after the frame settles
+
 local function onWindowFocused(win)
     if not (obj.enabled and win) then return end
-    -- Focus events can arrive while a transition (Mission Control / Exposé) is still animating the
-    -- window frame, so re-check everything after the frame has settled.
-    hs.timer.doAfter(0.08, function()
+    hs.timer.doAfter(WARP_SETTLE_DELAY, function()
         if not obj.enabled then return end
         -- pcall guards against stale window objects and version differences in the hs.window API:
-        -- if the window died during the delay or a method is unavailable, simply skip the warp.
+        -- if a method is unavailable or the window died, simply skip the warp.
         local ok, err = pcall(function()
             if not win:isStandard() then return end
             if obj:sameScreen(win) then return end
@@ -75,17 +83,22 @@ end
 --- MouseWarp:start([notify])
 --- Method
 --- Enables the auto-warp behavior. Idempotent. When `notify` is truthy, shows a temporary on-screen alert.
---- The window filter is created and subscribed only once (on the first call); re-enabling is instant.
+--- Enabling is instant; the one-time window scan is scheduled `MouseWarp.initDelay` seconds later and
+--- is canceled if the plugin is disabled again before it runs.
 function obj:start(notify)
     if obj.enabled then return obj end
-    if not obj.windowFilter then
-        obj.windowFilter = hs.window.filter.new()
-        obj.windowFilter:subscribe(hs.window.filter.windowFocused, onWindowFocused)
-        obj.logger.i("Window filter initialized")
-    end
     obj.enabled = true
     obj.logger.i("Mouse warp enabled")
     if notify then hs.alert.show("MouseWarp: 已启用") end
+    if not obj.windowFilter and not obj.initTimer then
+        obj.initTimer = hs.timer.doAfter(obj.initDelay, function()
+            obj.initTimer = nil
+            if not obj.enabled then return end
+            obj.windowFilter = hs.window.filter.new()
+            obj.windowFilter:subscribe(hs.window.filter.windowFocused, onWindowFocused)
+            obj.logger.i("Window filter initialized")
+        end)
+    end
     return obj
 end
 
@@ -94,6 +107,10 @@ end
 --- Disables the auto-warp behavior. Idempotent. When `notify` is truthy, shows a temporary on-screen alert.
 function obj:stop(notify)
     if not obj.enabled then return obj end
+    if obj.initTimer then
+        obj.initTimer:stop()
+        obj.initTimer = nil
+    end
     obj.enabled = false
     obj.logger.i("Mouse warp disabled")
     if notify then hs.alert.show("MouseWarp: 已禁用") end
