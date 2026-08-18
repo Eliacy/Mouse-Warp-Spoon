@@ -1,54 +1,57 @@
 # Mouse-Warp-Spoon
 
-在使用多个屏幕时，如果切换到的应用窗口在其他屏幕上，那么就把鼠标也移动到当前活跃窗口的中心。
+**English** | [中文（简体）](README.zh-CN.md)
 
-## 功能
+When using multiple screens, if the application window you switch to is on another screen, move the mouse cursor to the center of the currently active window.
 
-- 监听窗口焦点变化（Cmd+Tab 切换应用、点击 Dock 图标或另一应用的窗口、同一应用内 Cmd+` 切换窗口等）。
-- 仅当新聚焦的窗口与鼠标当前所在位置**不在同一个物理屏幕**时，才把鼠标移动到该窗口的中心；
-  属于同一个物理屏幕时，不对鼠标位置做任何处理。
-- 可通过自定义快捷键随时开启 / 关闭本插件。
+There used to be an app called "Mouse Warp" that handled this on the Mac, but it stopped receiving updates a long time ago — so I made this Spoon.
 
-## 安装
+## Features
 
-1. 将 `MouseWarp.spoon` 目录复制到 `~/.hammerspoon/Spoons/`：
+- Listens for window focus changes (Cmd+Tab app switching, clicking a Dock icon or another app's window, switching windows within the same app with Cmd+` ...).
+- Only when the newly focused window and the current mouse position are on **different physical screens** does it move the cursor to the center of that window; if they are on the same physical screen, the cursor is left untouched.
+- Can be enabled / disabled at any time with a custom hotkey.
+
+## Installation
+
+1. Copy the `MouseWarp.spoon` directory to `~/.hammerspoon/Spoons/`:
 
    ```bash
    cp -r MouseWarp.spoon ~/.hammerspoon/Spoons/
    ```
 
-2. 在 `~/.hammerspoon/init.lua` 中加载并启用：
+2. Load and enable it in `~/.hammerspoon/init.lua`:
 
    ```lua
    hs.loadSpoon("MouseWarp")
    spoon.MouseWarp:start()
    ```
 
-   或使用 `hs.spoons.use`（会自动调用 `start`）：
+   Or use `hs.spoons.use` (which calls `start` automatically):
 
    ```lua
    hs.spoons.use("MouseWarp")
    ```
 
-3. 重新加载 Hammerspoon 配置（菜单栏图标 → Reload Config，或执行 `hs.reload()`）。
+3. Reload the Hammerspoon config (menu bar icon → Reload Config, or run `hs.reload()`).
 
-## 设置开关快捷键
+## Toggle hotkey
 
-两种写法等价，按键格式为「修饰键组合 + 按键」：
+Both forms are equivalent; the key spec is "modifier combination + key":
 
 ```lua
--- 写法一：经典格式
+-- Form 1: classic format
 spoon.MouseWarp:bindHotkeys({
     toggle = { { "ctrl", "alt" }, "m" },
 })
 
--- 写法二：字符串格式
+-- Form 2: string format
 spoon.MouseWarp:bindHotkeys({
     toggle = "ctrl-alt-m",
 })
 ```
 
-也可结合 `hs.spoons.use` 一步完成：
+Or do it in one step with `hs.spoons.use`:
 
 ```lua
 hs.spoons.use("MouseWarp", {
@@ -58,17 +61,14 @@ hs.spoons.use("MouseWarp", {
 })
 ```
 
-快捷键绑定后始终可用，与插件当前的开启 / 关闭状态无关。也可以直接调用 `spoon.MouseWarp:start()`、`spoon.MouseWarp:stop()`、`spoon.MouseWarp:toggle()`。
+The hotkey remains active regardless of the plugin's current on/off state. You can also call `spoon.MouseWarp:start()`, `spoon.MouseWarp:stop()`, or `spoon.MouseWarp:toggle()` directly.
 
-## 行为说明
+## Behavior notes
 
-- 默认状态为**关闭**，需要调用 `start`（或 `hs.spoons.use`）后才生效。
-- 「物理屏幕」依据 macOS 的显示器几何布局判断：鼠标所在屏幕与窗口所在屏幕不同时才会移动鼠标。
-- 仅处理标准窗口；浮动面板、辅助窗口等非标准窗口不会触发鼠标移动。
-- 鼠标位置在事件触发后再做一次确认：如果在延迟期间用户已手动把鼠标移到了目标屏幕，则不会移动鼠标。
-- 通过快捷键（或 `toggle()`）开启 / 关闭插件时，除了写入 Hammerspoon 日志（`MouseWarp` 分类），还会在屏幕上弹出临时浮窗提示（`hs.alert.show`：`MouseWarp: 已启用` / `MouseWarp: 已禁用`）；
-  直接调用 `start()` / `stop()`（例如在配置加载时）只写日志，不弹浮窗。
-- 日志级别默认 `verbose`，插件的 info / debug 日志都会显示在 Hammerspoon 控制台；可在加载前修改 `spoon.MouseWarp.logLevel`，或运行时调用
-  `spoon.MouseWarp.logger:setLogLevel('warning')` 调整。注意 `hs.logger.new` 不传级别时默认是 `warning`，会把 info / debug 日志隐藏。
-- 插件基于 `hs.window.filter`。首次开启后会延迟 `spoon.MouseWarp.initDelay` 秒（默认 1 秒，可提前调整）再执行一次性全量窗口扫描，
-  把启动瞬间的集中卡顿移到启动后几秒的相对安静时机；若在延迟内关闭插件则取消扫描。扫描完成后开启 / 关闭只是切换标志位，即时应答。
+- Default state is **off**; it only takes effect after calling `start` (or `hs.spoons.use`).
+- "Physical screen" is determined by the macOS display geometry layout: the cursor moves only when the window's screen differs from the screen the mouse is currently on.
+- Only standard windows are handled; floating panels and accessory windows never trigger a warp.
+- The mouse position is re-checked right before warping: if you manually moved the pointer onto the target screen during the delay, the mouse is left alone.
+- Toggling via the hotkey (or `toggle()`) writes to the Hammerspoon log (category `MouseWarp`) and shows a transient on-screen alert (`hs.alert.show`, `MouseWarp: 已启用` / `MouseWarp: 已禁用`, i.e. "enabled" / "disabled"); directly calling `start()` / `stop()` (e.g. at config load) only logs.
+- The log level defaults to `verbose`, so the plugin's info / debug messages all appear in the Hammerspoon console. Change it before loading via `spoon.MouseWarp.logLevel`, or at runtime with `spoon.MouseWarp.logger:setLogLevel('warning')`. Note that `hs.logger.new` falls back to `warning` when no level is given, which hides info / debug messages.
+- Built on `hs.window.filter`. On the first enable, the one-time full window scan is deferred by `spoon.MouseWarp.initDelay` seconds (default 1 s, adjustable beforehand), moving the momentary startup jank to a quieter moment shortly after startup; disabling the plugin within the delay cancels the scan. Once the scan has run, toggling on/off is an instant flag flip.
