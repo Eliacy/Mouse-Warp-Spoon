@@ -62,33 +62,35 @@ local function onWindowFocused(win)
     end)
 end
 
---- MouseWarp:start()
+--- MouseWarp:start([notify])
 --- Method
---- Enables the auto-warp behavior. Idempotent.
-function obj:start()
+--- Enables the auto-warp behavior. Idempotent. When `notify` is truthy, shows a temporary on-screen alert.
+function obj:start(notify)
     if obj.enabled then return obj end
     obj.windowFilter:subscribe(hs.window.filter.windowFocused, onWindowFocused)
     obj.enabled = true
     obj.logger.i("Mouse warp enabled")
+    if notify then hs.alert.show("MouseWarp: 已启用") end
     return obj
 end
 
---- MouseWarp:stop()
+--- MouseWarp:stop([notify])
 --- Method
---- Disables the auto-warp behavior. Idempotent.
-function obj:stop()
+--- Disables the auto-warp behavior. Idempotent. When `notify` is truthy, shows a temporary on-screen alert.
+function obj:stop(notify)
     if not obj.enabled then return obj end
     obj.windowFilter:unsubscribe(onWindowFocused)
     obj.enabled = false
     obj.logger.i("Mouse warp disabled")
+    if notify then hs.alert.show("MouseWarp: 已禁用") end
     return obj
 end
 
 --- MouseWarp:toggle()
 --- Method
---- Toggles the auto-warp behavior on or off.
+--- Toggles the auto-warp behavior on or off, showing a temporary on-screen alert.
 function obj:toggle()
-    if obj.enabled then obj:stop() else obj:start() end
+    if obj.enabled then obj:stop(true) else obj:start(true) end
     return obj
 end
 
