@@ -68,5 +68,7 @@ hs.spoons.use("MouseWarp", {
 - 鼠标位置在事件触发后再做一次确认：如果在延迟期间用户已手动把鼠标移到了目标屏幕，则不会移动鼠标。
 - 通过快捷键（或 `toggle()`）开启 / 关闭插件时，除了写入 Hammerspoon 日志（`MouseWarp` 分类），还会在屏幕上弹出临时浮窗提示（`hs.alert.show`：`MouseWarp: 已启用` / `MouseWarp: 已禁用`）；
   直接调用 `start()` / `stop()`（例如在配置加载时）只写日志，不弹浮窗。
+- 日志级别默认 `verbose`，插件的 info / debug 日志都会显示在 Hammerspoon 控制台；可在加载前修改 `spoon.MouseWarp.logLevel`，或运行时调用
+  `spoon.MouseWarp.logger:setLogLevel('warning')` 调整。注意 `hs.logger.new` 不传级别时默认是 `warning`，会把 info / debug 日志隐藏。
 - 插件基于 `hs.window.filter`。首次开启后会延迟 `spoon.MouseWarp.initDelay` 秒（默认 1 秒，可提前调整）再执行一次性全量窗口扫描，
   把启动瞬间的集中卡顿移到启动后几秒的相对安静时机；若在延迟内关闭插件则取消扫描。扫描完成后开启 / 关闭只是切换标志位，即时应答。

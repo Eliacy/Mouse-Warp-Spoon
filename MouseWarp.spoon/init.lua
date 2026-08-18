@@ -18,11 +18,17 @@ obj.__index = obj
 -- Metadata ----------------------------------------------------------------
 
 obj.name = "MouseWarp"
-obj.version = "1.2.0"
+obj.version = "1.2.2"
 obj.author = "Elias Soong"
 obj.license = "MIT - https://opensource.org/licenses/MIT"
 
-obj.logger = hs.logger.new("MouseWarp")
+-- Log level for the `MouseWarp` logger: "verbose", "debug", "info", "warning" or "error".
+-- Be explicit here: `hs.logger.new` without a level falls back to 'warning' (hs.logger.defaultLogLevel),
+-- which would hide the info/debug messages from the console. Change before startup, or at runtime via
+-- `spoon.MouseWarp.logger:setLogLevel("info")`.
+obj.logLevel = "verbose"
+
+obj.logger = hs.logger.new("MouseWarp", obj.logLevel)
 
 -- Whether automatic warping is currently active.
 obj.enabled = false
@@ -71,7 +77,7 @@ local function onWindowFocused(win)
             if not win:isStandard() then return end
             if obj:sameScreen(win) then return end
             local f = win:frame()
-            hs.mouse.setAbsolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+            hs.mouse.absolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
             obj.logger.d("Mouse warped to the center of \"" .. (win:title() or "") .. "\"")
         end)
         if not ok then
