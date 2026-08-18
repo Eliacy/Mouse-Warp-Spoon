@@ -52,16 +52,23 @@ function obj:sameScreen(win)
 end
 
 local function onWindowFocused(win)
-    if not (obj.enabled and win and win:isStandard()) then return end
+    if not (obj.enabled and win) then return end
     -- Focus events can arrive while a transition (Mission Control / Exposé) is still animating the
     -- window frame, so re-check everything after the frame has settled.
     hs.timer.doAfter(0.08, function()
         if not obj.enabled then return end
-        if not (win:isValid() and win:isStandard()) then return end
-        if obj:sameScreen(win) then return end
-        local f = win:frame()
-        hs.mouse.setAbsolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
-        obj.logger.d("Mouse warped to the center of \"" .. (win:title() or "") .. "\"")
+        -- pcall guards against stale window objects and version differences in the hs.window API:
+        -- if the window died during the delay or a method is unavailable, simply skip the warp.
+        local ok, err = pcall(function()
+            if not win:isStandard() then return end
+            if obj:sameScreen(win) then return end
+            local f = win:frame()
+            hs.mouse.setAbsolutePosition({ x = f.x + f.w / 2, y = f.y + f.h / 2 })
+            obj.logger.d("Mouse warped to the center of \"" .. (win:title() or "") .. "\"")
+        end)
+        if not ok then
+            obj.logger.d("Warp skipped: " .. tostring(err))
+        end
     end)
 end
 
