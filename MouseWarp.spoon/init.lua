@@ -26,7 +26,10 @@ obj.enabled = false
 
 -- Internal state ------------------------------------------------------------
 
-obj.windowFilter = hs.window.filter.new()
+-- Created lazily on the first `start()` and kept subscribed for the whole session.
+-- Subscribing triggers a full scan of all apps/windows (via hs.window.filter's global watcher),
+-- so keeping it subscribed makes enable/disable an instant flag flip instead of a re-scan.
+obj.windowFilter = nil
 obj.hotkey = nil
 
 local MODIFIER_MAP = {
@@ -65,9 +68,14 @@ end
 --- MouseWarp:start([notify])
 --- Method
 --- Enables the auto-warp behavior. Idempotent. When `notify` is truthy, shows a temporary on-screen alert.
+--- The window filter is created and subscribed only once (on the first call); re-enabling is instant.
 function obj:start(notify)
     if obj.enabled then return obj end
-    obj.windowFilter:subscribe(hs.window.filter.windowFocused, onWindowFocused)
+    if not obj.windowFilter then
+        obj.windowFilter = hs.window.filter.new()
+        obj.windowFilter:subscribe(hs.window.filter.windowFocused, onWindowFocused)
+        obj.logger.i("Window filter initialized")
+    end
     obj.enabled = true
     obj.logger.i("Mouse warp enabled")
     if notify then hs.alert.show("MouseWarp: 已启用") end
@@ -79,7 +87,6 @@ end
 --- Disables the auto-warp behavior. Idempotent. When `notify` is truthy, shows a temporary on-screen alert.
 function obj:stop(notify)
     if not obj.enabled then return obj end
-    obj.windowFilter:unsubscribe(onWindowFocused)
     obj.enabled = false
     obj.logger.i("Mouse warp disabled")
     if notify then hs.alert.show("MouseWarp: 已禁用") end
