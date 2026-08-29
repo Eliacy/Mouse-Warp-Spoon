@@ -4,7 +4,7 @@
 
 在使用多个屏幕时，如果切换到的应用窗口在其他屏幕上，那么就把鼠标也移动到当前活跃窗口的中心。
 
-最初有个名为“Mouse Warp”的应用能在 Mac 上完成这部分功能，但后来这个应用很久不更新了，我就做了这个插件。
+最初有个名为“Mouse Warp”的应用能在 Mac 上完成这部分功能，但后来这个应用很久不更新了，我就做了这个插件。如果你觉得安装和配置 HammerSpoon 太麻烦，那也可以试试包含类似功能的独立应用 <https://github.com/sbmpost/AutoRaise> 。
 
 ## 功能
 
@@ -15,13 +15,17 @@
 
 ## 安装
 
-1. 将 `MouseWarp.spoon` 目录复制到 `~/.hammerspoon/Spoons/`：
+1. 下载并安装 Hammerspoon 本体（本插件需运行在它之上）：访问 <http://www.hammerspoon.org/>，点击 **Download the latest release**（跳转到 GitHub Releases 页面）下载安装包，再把 `Hammerspoon.app` 拖入「应用程序」（`/Applications/`）。首次运行时按提示为它开启「辅助功能（Accessibility）」权限——没有该权限，本插件无法读取窗口信息、也无法移动鼠标。
+
+   如果你的 Mac 系统版本较旧，请查阅 Hammerspoon 的 Release Notes 选择与其兼容的版本。
+
+2. 将 `MouseWarp.spoon` 目录复制到 `~/.hammerspoon/Spoons/`：
 
    ```bash
    cp -r MouseWarp.spoon ~/.hammerspoon/Spoons/
    ```
 
-2. 在 `~/.hammerspoon/init.lua` 中加载并启用：
+3. 在 `~/.hammerspoon/init.lua` 中加载并启用：
 
    ```lua
    hs.loadSpoon("MouseWarp")
@@ -34,7 +38,7 @@
    hs.spoons.use("MouseWarp")
    ```
 
-3. 重新加载 Hammerspoon 配置（菜单栏图标 → Reload Config，或执行 `hs.reload()`）。
+4. 重新加载 Hammerspoon 配置（菜单栏图标 → Reload Config，或执行 `hs.reload()`）。
 
 ## 设置开关快捷键
 

@@ -4,7 +4,7 @@
 
 When using multiple screens, if the application window you switch to is on another screen, move the mouse cursor to the center of the currently active window.
 
-There used to be an app called "Mouse Warp" that handled this on the Mac, but it stopped receiving updates a long time ago — so I made this Spoon.
+There used to be an app called "Mouse Warp" that handled this on the Mac, but it stopped receiving updates a long time ago — so I made this Spoon. If you find installing and configuring Hammerspoon too much hassle, you can also try AutoRaise (<https://github.com/sbmpost/AutoRaise>), a standalone app with similar functionality.
 
 ## Features
 
@@ -14,13 +14,17 @@ There used to be an app called "Mouse Warp" that handled this on the Mac, but it
 
 ## Installation
 
-1. Copy the `MouseWarp.spoon` directory to `~/.hammerspoon/Spoons/`:
+1. Download and install Hammerspoon itself (this plugin runs on top of it): visit <http://www.hammerspoon.org/>, click **Download the latest release** (it points to the GitHub releases page), then drag `Hammerspoon.app` into `/Applications/`. On first launch, follow the prompts to enable Accessibility access for the app — without that permission this plugin can neither read window info nor move the cursor.
+
+   If you are on an older macOS version, check Hammerspoon's Release Notes for a build that is compatible with your system.
+
+2. Copy the `MouseWarp.spoon` directory to `~/.hammerspoon/Spoons/`:
 
    ```bash
    cp -r MouseWarp.spoon ~/.hammerspoon/Spoons/
    ```
 
-2. Load and enable it in `~/.hammerspoon/init.lua`:
+3. Load and enable it in `~/.hammerspoon/init.lua`:
 
    ```lua
    hs.loadSpoon("MouseWarp")
@@ -33,7 +37,7 @@ There used to be an app called "Mouse Warp" that handled this on the Mac, but it
    hs.spoons.use("MouseWarp")
    ```
 
-3. Reload the Hammerspoon config (menu bar icon → Reload Config, or run `hs.reload()`).
+4. Reload the Hammerspoon config (menu bar icon → Reload Config, or run `hs.reload()`).
 
 ## Toggle hotkey
 
