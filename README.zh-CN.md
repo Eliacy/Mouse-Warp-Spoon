@@ -78,5 +78,16 @@ hs.spoons.use("MouseWarp", {
   直接调用 `start()` / `stop()`（例如在配置加载时）只写日志，不弹浮窗。
 - 日志级别默认 `verbose`，插件的 info / debug 日志都会显示在 Hammerspoon 控制台；可在加载前修改 `spoon.MouseWarp.logLevel`，或运行时调用
   `spoon.MouseWarp.logger:setLogLevel('warning')` 调整。注意 `hs.logger.new` 不传级别时默认是 `warning`，会把 info / debug 日志隐藏。
-- 插件基于 `hs.window.filter`。首次开启后会延迟 `spoon.MouseWarp.initDelay` 秒（默认 1 秒，可提前调整）再执行一次性全量窗口扫描，
-  把启动瞬间的集中卡顿移到启动后几秒的相对安静时机；若在延迟内关闭插件则取消扫描。扫描完成后开启 / 关闭只是切换标志位，即时应答。
+- 焦点变化由两个低成本的事件源跟踪（取代 `hs.window.filter`）：`hs.application.watcher` 负责应用切换（Cmd+Tab、点击 Dock 图标等）；
+  另有一个挂在**最前台应用**上的 `hs.uielement.watcher`，负责不切换应用的焦点变化（同应用内用 Cmd+` 切换窗口、点击同一应用的另一个窗口）。
+  两者的安装都是常数级开销（不做窗口扫描），因此开启插件是即时的，既没有启动卡顿，也不需要延迟启动。
+- 由于只监听最前台应用，某个始终未进入前台的后台应用内部发生的焦点变化不会被感知；
+  而所有可能「把鼠标留在原地」的场景（应用切换、Cmd+`、点击同一应用的另一个窗口）都已覆盖。
+- 插件关闭期间这两个监听器仍然保留，因此开启 / 关闭依旧只是切换标志位，即时应答。
+
+## 版本更新记录
+
+- **2.0.0**（2026-09-17）—— 事件层重写：用 `hs.application.watcher`（负责应用切换）加挂在最前台应用上的单个 `hs.uielement.watcher`（负责同应用内焦点变化）取代 `hs.window.filter`。监听器的安装是常数级开销，启动卡顿消失，同时删除了 `initDelay` 选项。
+- **1.2.2**（2026-08-18）—— 修正已弃用的鼠标 API 调用（`hs.mouse.setAbsolutePosition` → `hs.mouse.absolutePosition`），并把日志级别显式化，使 info / debug 日志真正可见。此后仅扩充文档（中英双语 README、安装说明、替代软件），代码未再变动。
+- **1.2.0**（2026-08-18）—— 新增 `initDelay`：延迟执行一次性初始化，把 `hs.window.filter` 的窗口扫描从配置加载时刻挪开。
+- **1.0.0**（2026-08-18）—— 首个可用版本：焦点窗口在另一块屏幕上时，把鼠标移到该窗口中心，并支持快捷键启停。
